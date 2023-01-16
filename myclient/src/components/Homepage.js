@@ -8,11 +8,16 @@ import { useEffect } from "react";
 import Store from "../context/context";
 import { UpdateData } from "../context/context";
 import { DeleteData } from "../context/context";
+import { Pagination } from "../components/Pagination";
 
-export default function Myhome() {
+export default function Myhome(props) {
   const { userData, setUserData } = useContext(Store);
   const { updateData, setUpdateData } = useContext(UpdateData);
   const { deleteData, setDeleteData } = useContext(DeleteData);
+  const [getuserData, setData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [postperpage, setPostPerPage] = useState([5]);
 
   const deleteuser = async (id) => {
     const resp = await fetch(`http://localhost:8005/deleteuser/${id}`, {
@@ -34,7 +39,6 @@ export default function Myhome() {
     }
   };
 
-  const [getuserData, setuserData] = useState([]);
   // console.log(getuserData.reverse());
 
   const getinformation = async (e) => {
@@ -49,14 +53,23 @@ export default function Myhome() {
     if (res.status === 404 || !data) {
       console.log("error");
     } else {
-      setuserData(data);
+      setLoading(true);
+      setData(data.reverse());
     }
   };
+
+  const indexOfLastPost = currentPage * postperpage;
+  const indexOfFirstPost = indexOfLastPost - postperpage;
+  const currentPosts = getuserData.slice(indexOfFirstPost, indexOfLastPost);
+
+  const paginate = (number) => {
+    setCurrentPage(number);
+  };
+
   useEffect(() => {
     getinformation();
   }, []);
 
-  getuserData.reverse();
   return (
     <>
       {userData ? (
@@ -137,10 +150,12 @@ export default function Myhome() {
               </tr>
             </thead>
             <tbody>
-              {getuserData.map((element, id) => {
+              {currentPosts.map((element, id) => {
                 return (
                   <tr key={id}>
-                    <th scope="row">{id + 1}</th>
+                    <th scope="row">
+                      {(currentPage - 1) * postperpage + id + 1}
+                    </th>
                     <td>{element.name}</td>
                     <td>{element.email}</td>
                     <td>{element.mobile}</td>
@@ -173,6 +188,12 @@ export default function Myhome() {
           </table>
         </div>
       </div>
+      <Pagination
+        totalpost={getuserData}
+        postPerPage={postperpage}
+        paginate={paginate}
+      />
     </>
   );
 }
+//
